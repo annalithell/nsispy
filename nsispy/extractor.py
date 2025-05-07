@@ -1,0 +1,1 @@
+## PLACEHOLDER: extract files from NSIS installer
