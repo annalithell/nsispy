@@ -18,6 +18,7 @@ import os
 import re
 import pprint
 import logging
+import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -38,23 +39,38 @@ def analyze_installer_7z(filepath):
         FileNotFoundError: If the file doesn't exist
         NSIS7zAnalysisError: If 7z fails or returns unexpected output
     """
+
+    # Check if the file exists
     if not os.path.isfile(filepath):
         logger.error(f"File does not exist: {filepath}")
         raise FileNotFoundError(f"File does not exist: {filepath}")
     
-    seven_zip_path = r"C:\Program Files\7-Zip\7z.exe"  # TODO: Improve portability
+    # Check if 7z is installed and in PATH
+    path = shutil.which('7z') or shutil.which('7z.exe')
+    
+    if path is None:
+        if os.path.exists(r"C:\Program Files\7-Zip\7z.exe"):
+            path = r"C:\Program Files\7-Zip\7z.exe"
+        else:
+            logger.exception("7z not found in PATH and default location not accessible.")
+            raise RuntimeError("7z executable not found. Please install 7-Zip or add it to PATH.")
+        
+    logging.debug(f"7z path is {path}")
 
+    # Run the 7-Zip command-line utility to list the contents of the archive (filepath)
     try:
         result = subprocess.run(
-            [seven_zip_path, 'l', filepath],
+            [path, 'l', filepath],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
             check=True
         )
+
     except FileNotFoundError:
         logger.exception("7z is not installed or not in PATH.")
         raise NSIS7zAnalysisError("7z is not installed or not in PATH.")
+    
     except subprocess.CalledProcessError as e:
         logger.error(f"7z failed: {e.stdout}")
         raise NSIS7zAnalysisError(f"7z failed: {e.stdout}")
@@ -77,33 +93,47 @@ def _parse_7z_output(output):
     metadata_exists = False
 
     split = output.splitlines()
+
+    # The last line contains a summary of files; split it and remove empty parts
     file_summary = list(filter(None, split[-1].strip().split(" ")))
 
+    # Check if the output format is as expected (should have at least 3 parts)
     if len(file_summary) < 3:
         logger.warning("Unexpected 7z output format.")
         return {}
 
+    # Check if the number of files in the archive is zero 
+    # if this is the case, index 2 in summary is '0'
     if file_summary[2] == '0':
         logger.info("No files found in the archive.")
     else:
+        # Files exist; set flag and extract the total number of files
         metadata_exists = True
         total_files = int(file_summary[-2])
         logger.info(f"Files found in the archive: {total_files}")
 
-    file_nr = 1
-    for i, line in enumerate(split):
+    file_nr = 1 # Counter to track the number of files processed
+
+    # Iterate over each line of the output to extract headers and file metadata
+    for line in split:
+
+        # Attempt to match lines containing header key-value pairs (e.g. "Path = ...")
         header_match = re.match(r"^\s*(.+?)\s*=\s*(.+)$", line)
         if header_match:
             key, value = header_match.groups()
             header[key.strip()] = value.strip()
-            continue
+            continue # Skip to next line after processing header
         
+        # Attempt to match lines containing file metadata info in a specific format:
+        # Date Time Attr Size Compressed Name
         metadata_match = re.match(
             r"(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) (\S+) +(\d+) +(\d+) +(.+)", line
         )
 
+        # If metadata exists and the line matches file metadata format and we haven't exceeded the total files count:
         if metadata_exists and metadata_match and file_nr <= total_files:
             filename = metadata_match.group(6)
+            # Store metadata info in the metadata dictionary, keyed by filename
             metadata[filename] = {
                 'Date': metadata_match.group(1),
                 'Time': metadata_match.group(2),
@@ -111,7 +141,7 @@ def _parse_7z_output(output):
                 'Size': metadata_match.group(4),
                 'Compressed': metadata_match.group(5)
             }
-            file_nr += 1
+            file_nr += 1 # Increment the file counter
 
     logger.debug("Header data:\n%s", pprint.pformat(header))
     logger.debug("File metadata:\n%s", pprint.pformat(metadata))
