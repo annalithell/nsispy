@@ -101,16 +101,21 @@ def _parse_7z_output(output):
     if len(file_summary) < 3:
         logger.warning("Unexpected 7z output format.")
         return {}
-
+    
     # Check if the number of files in the archive is zero 
     # if this is the case, index 2 in summary is '0'
-    if file_summary[2] == '0':
-        logger.info("No files found in the archive.")
-    else:
-        # Files exist; set flag and extract the total number of files
-        metadata_exists = True
-        total_files = int(file_summary[-2])
-        logger.info(f"Files found in the archive: {total_files}")
+    try:
+        total_files = int(file_summary[2])
+        if total_files == 0:
+            logger.info("No files found in the archive.")
+        else: 
+            # Files exist; set flag and extract the total number of files
+            metadata_exists = True
+            logger.info(f"Files found in the archive: {total_files}")
+
+    except (ValueError, IndexError) as e:
+        logger.warning(f"Unexpected 7z file summary format: {file_summary} - {e}")
+        return {}
 
     file_nr = 1 # Counter to track the number of files processed
 
