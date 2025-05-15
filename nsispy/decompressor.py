@@ -17,8 +17,7 @@ import sys
 import zlib
 import logging
 
-from analyzer import analyze_installer_7z
-
+from nsis7z import analyze_installer_7z
 
 ## PLACEHOLDER: detect which type of compression was used for .exe file
 ## NSIS: supports zlib, bzip2 and lzma compression (default: zlib)
