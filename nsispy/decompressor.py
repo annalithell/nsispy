@@ -15,6 +15,7 @@
 
 import sys
 import zlib
+import logging
 
 from analyzer import analyze_installer_7z
 
@@ -54,10 +55,16 @@ def nsis_decompression(file_path):
 
 # Example usage:
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=[
+            logging.FileHandler("nsispy.log"),        # Log to a file
+            logging.StreamHandler()                   # Also log to console
+        ]
+    )
+
     if len(sys.argv) != 2:
         print("Usage: python detect_nsis_compression.py <installer.exe>")
     else:
-        #nsis_decompression(sys.argv[1])
         metadata = analyze_installer_7z(sys.argv[1])
-        #print(metadata)  # Should print: Nsis
-
