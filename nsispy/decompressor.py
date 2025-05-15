@@ -59,5 +59,5 @@ if __name__ == "__main__":
     else:
         #nsis_decompression(sys.argv[1])
         metadata = analyze_installer_7z(sys.argv[1])
-        print(metadata)  # Should print: Nsis
+        #print(metadata)  # Should print: Nsis
 

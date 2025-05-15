@@ -16,6 +16,7 @@
 import subprocess
 import os
 import re
+import pprint
 
 class NSIS7zAnalysisError(Exception):
     pass
@@ -53,8 +54,6 @@ def analyze_installer_7z(filepath):
     except subprocess.CalledProcessError as e:
         raise NSIS7zAnalysisError(f"7z failed: {e.stdout}")
 
-    print(result.stdout)
-
     return _parse_7z_output(result.stdout)
     #return result.stdout
 
@@ -70,11 +69,57 @@ def _parse_7z_output(output):
     Returns:
         dict: Parsed metadata
     """
+    header_data = {}
     metadata = {}
+    metadata_exists = False
 
-    for line in output.splitlines():
-        if " = " in line:
-            key, value = line.split("=", 1)
-            metadata[key.strip()] = value.strip()
+    #print(output.splitlines())
 
-    return metadata
+    split = output.splitlines()
+    # check if file contains metadata
+    file_summary = str(split[-1]).strip().split(" ")
+    # remove empty strings
+    file_summary = list(filter(None, file_summary))
+
+    #print("file_summary: " + str(file_summary))
+
+    #print("file_summary: " + str(file_summary))
+    if file_summary[2] == '0':
+        print("No files found in the archive.")
+
+    else:
+        print("Files found in the archive.")
+        metadata_exists = True
+        total_files = int(file_summary[-2])
+        #print("Total files: " + str(total_files))
+
+    # Loop through each line and extract header- and/or metadata
+    file_nr = 1
+    for i, line in enumerate(split):
+        header_match = re.match(r"^\s*(.+?)\s*=\s*(.+)$", line)
+
+        if header_match:
+            key, value = header_match.groups()
+            header_data[key.strip()] = value.strip()
+            continue
+        
+        metadata_match = re.match(r"(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) (\S+) +(\d+) +(\d+) +(.+)", line)
+
+        if metadata_exists and metadata_match and file_nr <= total_files:
+            #print("metadata exist: check for metadata")
+            #print("metadata_match: " + str(metadata_match.groups()))
+            metadata[file_nr] = {}
+            metadata[file_nr]['Date'] = metadata_match.group(1)
+            metadata[file_nr]['Time'] = metadata_match.group(2)
+            metadata[file_nr]['Attr'] = metadata_match.group(3)
+            metadata[file_nr]['Size'] = metadata_match.group(4)
+            metadata[file_nr]['Compressed'] = metadata_match.group(5)
+            metadata[file_nr]['Name'] = metadata_match.group(6)
+            file_nr += 1
+
+    print("header_data: ")
+    pprint.pprint(header_data)
+    print("metadata: ")
+    pprint.pprint(metadata)
+
+    return header_data

@@ -13,9 +13,9 @@ Section "Install"
   # Create installation directory
   CreateDirectory "$INSTDIR"
 
-  # Write a harmless text file
-  FileOpen $0 "$INSTDIR\hello.txt" w
-  FileWrite $0 "Hello World!\r\n"
-  FileClose $0
+  # Extract the included file 'data.txt' to the install directory
+  SetOutPath "$INSTDIR"
+  File "data.txt"
+
 
 SectionEnd

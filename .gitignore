@@ -1,3 +1,5 @@
 venv
 *.exe
 *__pycache__
+*.nsi
+tests/nsis_scripts/
