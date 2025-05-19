@@ -25,9 +25,9 @@ logger = logging.getLogger(__name__)
 class NSIS7zAnalysisError(Exception):
     pass
 
-def analyze_installer_7z(filepath):
+def list_contents_7z(filepath):
     """
-    Analyzes an NSIS-generated installer using 7-Zip.
+    Lists contents of an NSIS-generated installer using 7-Zip.
 
     Parameters:
         filepath (str): Path to the .exe installer

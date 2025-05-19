@@ -1,1 +1,1 @@
-from .nsis7z import analyze_installer_7z, NSIS7zAnalysisError
+from .nsis7z import list_contents_7z, NSIS7zAnalysisError

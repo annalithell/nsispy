@@ -17,7 +17,7 @@ import sys
 import zlib
 import logging
 
-from nsis7z import analyze_installer_7z
+from nsis7z import list_contents_7z
 
 ## PLACEHOLDER: detect which type of compression was used for .exe file
 ## NSIS: supports zlib, bzip2 and lzma compression (default: zlib)
@@ -66,4 +66,4 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python detect_nsis_compression.py <installer.exe>")
     else:
-        metadata = analyze_installer_7z(sys.argv[1])
+        metadata = list_contents_7z(sys.argv[1])
