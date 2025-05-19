@@ -13,44 +13,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
-import zlib
-import logging
+# import sys
+# import zlib
+# import logging
 
-from nsis7z import list_contents_7z
+# from nsis7z import list_contents_7z
 
-## PLACEHOLDER: detect which type of compression was used for .exe file
-## NSIS: supports zlib, bzip2 and lzma compression (default: zlib)
+# ## PLACEHOLDER: detect which type of compression was used for .exe file
+# ## NSIS: supports zlib, bzip2 and lzma compression (default: zlib)
 
-def find_nsis_magic(data):
-    # Search for 0xDEADBEEF in little-endian: EF BE AD DE
-    magic = b'\xEF\xBE\xAD\xDE'
-    offset = data.find(magic)
-    if offset == -1:
-        raise ValueError("NSIS magic header (DEADBEEF) not found.")
-    return offset
+# def find_nsis_magic(data):
+#     # Search for 0xDEADBEEF in little-endian: EF BE AD DE
+#     magic = b'\xEF\xBE\xAD\xDE'
+#     offset = data.find(magic)
+#     if offset == -1:
+#         raise ValueError("NSIS magic header (DEADBEEF) not found.")
+#     return offset
 
-def try_find_zlib_stream(data, start_offset, search_window=1000):
-    for offset in range(start_offset, start_offset + search_window):
-        try:
-            # Try decompressing from here
-            result = zlib.decompress(data[offset:])
-            print(f"Found valid zlib stream at offset: 0x{offset:X}")
-            return result
-        except zlib.error:
-            continue
-    raise RuntimeError("Could not find a valid zlib-compressed stream near NSIS header.")
+# def try_find_zlib_stream(data, start_offset, search_window=1000):
+#     for offset in range(start_offset, start_offset + search_window):
+#         try:
+#             # Try decompressing from here
+#             result = zlib.decompress(data[offset:])
+#             print(f"Found valid zlib stream at offset: 0x{offset:X}")
+#             return result
+#         except zlib.error:
+#             continue
+#     raise RuntimeError("Could not find a valid zlib-compressed stream near NSIS header.")
 
-def nsis_decompression(file_path):
-    try:
-        with open(file_path, 'rb') as f:
-            data = f.read()
-            start_offset = find_nsis_magic(data)
-            decompressed_data = try_find_zlib_stream(data, start_offset)
-            print(f"Decompressed {len(decompressed_data)} bytes.")
+# def nsis_decompression(file_path):
+#     try:
+#         with open(file_path, 'rb') as f:
+#             data = f.read()
+#             start_offset = find_nsis_magic(data)
+#             decompressed_data = try_find_zlib_stream(data, start_offset)
+#             print(f"Decompressed {len(decompressed_data)} bytes.")
 
-    except Exception as e:
-        print(f"Error reading file: {e}")
+#     except Exception as e:
+#         print(f"Error reading file: {e}")
 
 # # Example usage:
 # if __name__ == "__main__":
