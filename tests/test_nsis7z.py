@@ -16,7 +16,7 @@
 import pytest
 import subprocess
 from unittest.mock import patch, MagicMock
-from nsispy.nsis7z import analyze_installer_7z, NSIS7zAnalysisError, _parse_7z_output
+from nsispy.nsis7z import list_contents_7z, NSIS7zAnalysisError, _parse_7z_output
 
 ## TODO: Add more tests for different compression methods and edge cases
 
@@ -67,14 +67,14 @@ def patch_subprocess_run() -> MagicMock:
 def test_file_not_found() -> None:
     with patch("os.path.isfile", return_value=False):
         with pytest.raises(FileNotFoundError, match="File does not exist:"):
-            analyze_installer_7z("nonexistent.exe")
+            list_contents_7z("nonexistent.exe")
 
 @patch("os.path.exists", return_value=False)
 @patch("shutil.which", return_value=None)
 @patch("os.path.isfile", return_value=True)
 def test_7z_not_found_raises(mock_isfile, mock_which, mock_exists) -> None:
     with pytest.raises(RuntimeError, match="7z executable not found"):
-        analyze_installer_7z("dummy.exe")
+        list_contents_7z("dummy.exe")
 
 @patch("os.path.exists", return_value=True)
 @patch("shutil.which", return_value=None)
@@ -85,7 +85,7 @@ def test_7z_found_in_default_path(mock_isfile, mock_which, mock_exists, patch_su
     mock_result.stdout = SAMPLE_OUTPUT
     patch_subprocess_run.return_value = mock_result
 
-    result = analyze_installer_7z("dummy.exe")
+    result = list_contents_7z("dummy.exe")
     assert result["header"]["Path"] == "test.exe"
     assert "file1.txt" in result["files"]
 
@@ -94,7 +94,7 @@ def test_analyze_success(patch_subprocess_run: MagicMock) -> None:
     mock_result.stdout = SAMPLE_OUTPUT
     patch_subprocess_run.return_value = mock_result
 
-    result = analyze_installer_7z("dummy.exe")
+    result = list_contents_7z("dummy.exe")
 
     assert isinstance(result, dict)
     assert "header" in result and "files" in result
@@ -105,13 +105,13 @@ def test_analyze_success(patch_subprocess_run: MagicMock) -> None:
 def test_subprocess_file_not_found(patch_subprocess_run: MagicMock) -> None:
     patch_subprocess_run.side_effect = FileNotFoundError
     with pytest.raises(NSIS7zAnalysisError, match="7z is not installed or not in PATH."):
-        analyze_installer_7z("dummy.exe")
+        list_contents_7z("dummy.exe")
 
 def test_subprocess_called_process_error(patch_subprocess_run: MagicMock) -> None:
     error = subprocess.CalledProcessError(1, ['7z', 'l', 'dummy.exe'], output="error output")
     patch_subprocess_run.side_effect = error
     with pytest.raises(NSIS7zAnalysisError, match="7z failed: error output"):
-        analyze_installer_7z("dummy.exe")
+        list_contents_7z("dummy.exe")
 
 def test_parse_7z_output_basic() -> None:
     parsed = _parse_7z_output(SAMPLE_OUTPUT)
