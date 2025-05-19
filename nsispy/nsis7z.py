@@ -18,14 +18,8 @@ import os
 import re
 import pprint
 import logging
-import shutil
-import tempfile
-
-### for testing
-import sys
-####
-
-from nsispy.util import get_7z_path
+import pathlib
+from .util import get_7z_path
 
 logger = logging.getLogger(__name__)
 
@@ -75,17 +69,31 @@ def list_contents_7z(filepath):
     return _parse_7z_output(result.stdout)
 
 
-# def extract_7z(filepath, exe_path):
-#     with tempfile.TemporaryDirectory() as temp_dir:
-#         result = subprocess.run(
-#             [shutil.which('7z'), 'x', filepath, f"-o{temp_dir}"],
-#             stdout=subprocess.PIPE,
-#             stderr=subprocess.STDOUT,
-#             text=True,
-#             check=True
-#         )
-        
+def extract_7z(filepath, output_dir):
+    """
+    Extracts the contents of an NSIS-generated installer using 7-Zip.
+    Parameters:
+        filepath (str): Path to the .exe installer
+        output_dir (str): Directory where the files will be extracted
+    Returns:
+        None
+    Raises:
+        FileNotFoundError: If the file doesn't exist
+        NSIS7zAnalysisError: If 7z fails or returns unexpected output
+    """
+    path_7z = get_7z_path()
+    logger.debug("Using 7-Zip at: %s", path_7z)
 
+    subprocess.run(
+        [path_7z, 'x', filepath, f"-o{output_dir}", "-y"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=True
+    )
+    extracted_files = list(pathlib.Path(output_dir).rglob('*'))
+    logger.debug("Extracted files: %s", extracted_files)
+        
 
 def _parse_7z_output(output):
     """
@@ -164,19 +172,3 @@ def _parse_7z_output(output):
         'header': header,
         'files': metadata
     }
-
-# Example usage:
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        handlers=[
-            logging.FileHandler("nsispy.log"),        # Log to a file
-            logging.StreamHandler()                   # Also log to console
-        ]
-    )
-
-    if len(sys.argv) != 2:
-        print("Usage: python detect_nsis_compression.py <installer.exe>")
-    else:
-        metadata = list_contents_7z(sys.argv[1])
