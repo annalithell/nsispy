@@ -19,6 +19,13 @@ import re
 import pprint
 import logging
 import shutil
+import tempfile
+
+### for testing
+import sys
+####
+
+from nsispy.util import get_7z_path
 
 logger = logging.getLogger(__name__)
 
@@ -39,28 +46,18 @@ def list_contents_7z(filepath):
         FileNotFoundError: If the file doesn't exist
         NSIS7zAnalysisError: If 7z fails or returns unexpected output
     """
-
     # Check if the file exists
     if not os.path.isfile(filepath):
         logger.error(f"File does not exist: {filepath}")
         raise FileNotFoundError(f"File does not exist: {filepath}")
     
-    # Check if 7z is installed and in PATH
-    path = shutil.which('7z') or shutil.which('7z.exe')
-    
-    if path is None:
-        if os.path.exists(r"C:\Program Files\7-Zip\7z.exe"):
-            path = r"C:\Program Files\7-Zip\7z.exe"
-        else:
-            logger.exception("7z not found in PATH and default location not accessible.")
-            raise RuntimeError("7z executable not found. Please install 7-Zip or add it to PATH.")
-        
-    logging.debug(f"7z path is {path}")
+    # Fetch path to 7zip executable
+    path_7z = get_7z_path()
 
     # Run the 7-Zip command-line utility to list the contents of the archive (filepath)
     try:
         result = subprocess.run(
-            [path, 'l', filepath],
+            [path_7z, 'l', filepath],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -76,6 +73,18 @@ def list_contents_7z(filepath):
         raise NSIS7zAnalysisError(f"7z failed: {e.stdout}")
 
     return _parse_7z_output(result.stdout)
+
+
+# def extract_7z(filepath, exe_path):
+#     with tempfile.TemporaryDirectory() as temp_dir:
+#         result = subprocess.run(
+#             [shutil.which('7z'), 'x', filepath, f"-o{temp_dir}"],
+#             stdout=subprocess.PIPE,
+#             stderr=subprocess.STDOUT,
+#             text=True,
+#             check=True
+#         )
+        
 
 
 def _parse_7z_output(output):
@@ -155,3 +164,19 @@ def _parse_7z_output(output):
         'header': header,
         'files': metadata
     }
+
+# Example usage:
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=[
+            logging.FileHandler("nsispy.log"),        # Log to a file
+            logging.StreamHandler()                   # Also log to console
+        ]
+    )
+
+    if len(sys.argv) != 2:
+        print("Usage: python detect_nsis_compression.py <installer.exe>")
+    else:
+        metadata = list_contents_7z(sys.argv[1])

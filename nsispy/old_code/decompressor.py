@@ -52,18 +52,18 @@ def nsis_decompression(file_path):
     except Exception as e:
         print(f"Error reading file: {e}")
 
-# Example usage:
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        handlers=[
-            logging.FileHandler("nsispy.log"),        # Log to a file
-            logging.StreamHandler()                   # Also log to console
-        ]
-    )
+# # Example usage:
+# if __name__ == "__main__":
+#     logging.basicConfig(
+#         level=logging.DEBUG,
+#         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+#         handlers=[
+#             logging.FileHandler("nsispy.log"),        # Log to a file
+#             logging.StreamHandler()                   # Also log to console
+#         ]
+#     )
 
-    if len(sys.argv) != 2:
-        print("Usage: python detect_nsis_compression.py <installer.exe>")
-    else:
-        metadata = list_contents_7z(sys.argv[1])
+#     if len(sys.argv) != 2:
+#         print("Usage: python detect_nsis_compression.py <installer.exe>")
+#     else:
+#         metadata = list_contents_7z(sys.argv[1])
