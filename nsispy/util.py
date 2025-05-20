@@ -16,6 +16,7 @@
 import os
 import shutil
 import logging
+import hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -43,3 +44,25 @@ def get_7z_path() -> str:
         
     logging.debug(f"7z path is {path}")
     return path
+
+
+def sha256hash(file_path):
+    """
+    Get the SHA256 hash of a file.
+    
+    Parameters:
+        file_path (str): Path to the file.
+    
+    Returns:
+        str: SHA256 hash of the file.
+    """
+    BUF_SIZE = 65536  # Read in 64kB chunks
+    sha256 = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        while True:
+            data = f.read(BUF_SIZE)
+            # True if eof = 1
+            if not data:
+                break
+            sha256.update(data)
+    return sha256.hexdigest()

@@ -4,3 +4,4 @@ venv
 *.nsi
 tests/nsis_scripts/
 *.log
+.pytest_cache
