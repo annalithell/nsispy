@@ -1,6 +1,6 @@
 # nsispy 
 
- `nsispy` is a Python library and CLI tool for inspecting and analyzing NSIS (Nullsoft Scriptable Install System) `.exe` files.
+`nsispy` is a Python library and CLI tool for inspecting and analyzing NSIS (Nullsoft Scriptable Install System) `.exe` files.
 
 ## Features
 - Extract `.exe` files using 7-Zip. 
@@ -26,7 +26,7 @@ This section describes how to utilize the library and the CLI tool.
 
 2. Install required dependencies:
 
-`pip install -r requriements.txt`
+`pip install -r requirements.txt`
 
 3. Activate the virtual environment:
 
