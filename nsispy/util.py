@@ -66,3 +66,17 @@ def sha256hash(file_path):
                 break
             sha256.update(data)
     return sha256.hexdigest()
+
+def setup_logging():
+    """
+    Set up logging configuration.
+    """
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=[
+            logging.FileHandler("nsispy.log"),
+            logging.StreamHandler()
+        ]
+    )
+    return logging.getLogger(__name__)

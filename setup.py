@@ -11,4 +11,9 @@ setup(
     tests_require=['pytest==4.4.1'],
     test_suite='tests',
     python_requires='>=3.11.9',
+    entry_points={
+        'console_scripts': [
+            'nsispy=nsispy.cli:main',
+        ],
+    },
 )
