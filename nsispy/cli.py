@@ -19,27 +19,27 @@ import logging
 import argparse
 import pathlib
 import tempfile
+import sys
 
 from .nsis7z import extract_7z
+from .analyzer import initial_analysis
+from .util import setup_logging
 
-def main():
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        handlers=[
-            logging.FileHandler("nsispy.log"),
-            logging.StreamHandler()
-        ]
-    )
-    logger = logging.getLogger(__name__)
+def _prompt_for_virustotal_key(logger):
+    proceed = input("In order to analyze the file using VirusTotal, we need your personal API key.\nDo you wish to proceed? (yes/no): ").strip().lower()
+    if proceed not in ("yes", "y"):
+        logger.info("User declined VirusTotal check.")
+        return None
+    api_key = input("Enter your VirusTotal API key: ").strip()
+    if not api_key:
+        logger.warning("No API key provided. Skipping VirusTotal check.")
+        return None
+    return api_key
 
-    parser = argparse.ArgumentParser(description="NSIS Installer extractor and analyzer")
-    parser.add_argument("installer", help="Path to the NSIS installer .exe file")
-    args = parser.parse_args()
 
-    installer_path = args.installer
-
-    logger.info(f"Starting extraction for: {installer_path}")
+def run_analysis(installer_path, check_vt, vt_api_key, logger):
+    logger.info(f"Starting analysis for: {installer_path}")
+    initial_analysis(installer_path, check_vt, vt_api_key)
 
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -53,9 +53,30 @@ def main():
                 logger.info(f" - {f}")
 
             # TODO: integrate analyzer here in future
+            # analyze_dir(temp_dir)
 
     except Exception as e:
         logger.error(f"Failed to extract/analyze: {e}")
+
+
+def main():
+    logger = setup_logging()
+
+    parser = argparse.ArgumentParser(description="NSIS Installer extractor and analyzer")
+    parser.add_argument("--path", required=True, help="Path to the NSIS installer .exe file")
+    parser.add_argument("-vt", "--check-vt", action="store_true", help="Provide flag to check file hash on VirusTotal")
+    args = parser.parse_args()
+
+    installer_path = args.path
+    if not pathlib.Path(installer_path).is_file():
+        logger.error(f"Invalid path provided: {installer_path}")
+        sys.exit(1)
+
+    vt_api_key = None
+    if args.check_vt:
+        vt_api_key = _prompt_for_virustotal_key(logger)
+
+    run_analysis(installer_path, bool(vt_api_key), vt_api_key, logger)
 
 
 if __name__ == "__main__":

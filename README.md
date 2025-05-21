@@ -9,24 +9,26 @@ TO BE CONTINUED
 
 ## Installation
 
-### Dependencies
-- 7-Zip must be installed on you system. You can download it from the official website: https://www.7-zip.org/ 
+**Dependencies**
+- To utilize the full functionality of the library, 7-Zip must be installed on you system. You can download it from the official website: https://www.7-zip.org/ 
 
 TO BE CONTINUED
 
 ## Usage
 
-This section describes how to utilize the library and the CLI tool. 
+This section describes how to run the CLI and what functions can be imported from the library. 
 
-### How to use the CLI tool
+**How to run the CLI**
+
+1. Clone the repo:
+```
+git clone https://github.com/annalithell/nsispy.git`
+cd nsispy 
+``` 
 
 1. Create a virtual environment:
 
-`python -m venv /path/to/new/virtual/environment`
-
-2. Install required dependencies:
-
-`pip install -r requirements.txt`
+`python -m venv venv`
 
 3. Activate the virtual environment:
 
@@ -34,7 +36,24 @@ This section describes how to utilize the library and the CLI tool.
 
 `venv\bin\activate` 
 
-4. Run the CLI tool (usage instructions to be added)
+4. Install the package:
+
+`pip install .` 
+
+5. Run the CLI:
+   
+`nsispy --path /path/to/installer.exe --check-vt`
+
+**CLI Options**
+- --path: Path to the `.exe` installer file to analyze (required).
+
+- --check-vt: Optional flag to check the file hash on VirusTotal.
+  
+⚠️ To use `--check-vt` you must have a personal VirusTotal account and provide an API key when prompted.
+
+**About the library**
+
+TO BE CONTINUED
 
 ## Testing
 
