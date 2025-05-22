@@ -18,6 +18,7 @@ import pefile
 import logging
 import subprocess
 import pprint
+import requests
 from .util import sha256hash
 
 logger = logging.getLogger(__name__)
@@ -165,9 +166,38 @@ def is_signed(file_path):
     
     
 def is_hash_known(filehash, vt_api_key):
+    """
+    Check if the hash is known on VirusTotal.
+    This function requires a VirusTotal API key.
+
+    Parameters:
+        filehash (str): SHA256 hash of the file
+        vt_api_key (str): API key for VirusTotal
+
+    Returns:
+        bool: True if hash is known, False otherwise
+    """
     logger.info("Checking hash %s on VirusTotal...", filehash)
-    ## TODO: Implement VirusTotal API check
-    return False
+
+    url = f"https://www.virustotal.com/api/v3/files/{filehash}"
+
+    headers = {
+    "accept": "application/json",
+    "x-apikey": vt_api_key
+    }
+
+    response = requests.get(url, headers=headers, params={"apikey": vt_api_key})
+
+    if response.status_code == 404:
+        logger.info("Hash not found on VirusTotal.")
+        return False
+    elif response.status_code == 200:
+        logger.info("Hash found on VirusTotal.")
+        logger.info(response.text)
+        return True
+    else:
+        logger.warning("Error checking hash on VirusTotal: %s", response.status_code)
+        return False
     
 
 def initial_analysis(file_path, check_virustotal, vt_api_key):
@@ -200,5 +230,4 @@ def initial_analysis(file_path, check_virustotal, vt_api_key):
         results["is_hash_known"] = is_hash_known(sha256hash(file_path), vt_api_key)
     else:
         results["is_hash_known"] = False
-    logger.info(results)
     return results
