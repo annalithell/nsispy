@@ -91,8 +91,8 @@ def extract_7z(filepath, output_dir):
         text=True,
         check=True
     )
-    extracted_files = list(pathlib.Path(output_dir).rglob('*'))
-    logger.debug("Extracted files: %s", extracted_files)
+    #extracted_files = list(pathlib.Path(output_dir).rglob('*'))
+    #logger.debug("Extracted files: %s", extracted_files)
         
 
 def _parse_7z_output(output):

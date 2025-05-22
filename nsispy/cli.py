@@ -22,7 +22,7 @@ import tempfile
 import sys
 
 from .nsis7z import extract_7z
-from .analyzer import initial_analysis
+from .analyzer import initial_analysis, resolve_pe_imports, analyze_pe_header
 from .util import setup_logging
 
 def _prompt_for_virustotal_key(logger):
@@ -48,12 +48,18 @@ def run_analysis(installer_path, check_vt, vt_api_key, logger):
 
             # List extracted files for info
             extracted_files = list(pathlib.Path(temp_dir).rglob("*"))
+
             logger.info(f"Extracted {len(extracted_files)} files:")
             for f in extracted_files:
                 logger.info(f" - {f}")
 
             # TODO: integrate analyzer here in future
-            # analyze_dir(temp_dir)
+            #analyze_extracted_files(temp_dir)
+            resolve_pe_imports(installer_path)
+            logger.info("DLL analysis completed.")
+
+
+
 
     except Exception as e:
         logger.error(f"Failed to extract/analyze: {e}")

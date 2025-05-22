@@ -22,7 +22,7 @@ This section describes how to run the CLI and what functions can be imported fro
 
 1. Clone the repo:
 ```
-git clone https://github.com/annalithell/nsispy.git`
+git clone https://github.com/annalithell/nsispy.git
 cd nsispy 
 ``` 
 
