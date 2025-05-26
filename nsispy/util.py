@@ -45,7 +45,6 @@ def get_7z_path() -> str:
     logging.debug(f"7z path is {path}")
     return path
 
-
 def sha256hash(file_path):
     """
     Get the SHA256 hash of a file.

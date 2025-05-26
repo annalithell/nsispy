@@ -15,14 +15,11 @@
 
 # cli.py
 
-import logging
 import argparse
 import pathlib
-import tempfile
 import sys
 
-from .nsis7z import extract_7z
-from .analyzer import initial_analysis, resolve_pe_imports, analyze_pe_header
+from .analyzer import run_analysis
 from .util import setup_logging
 
 def _prompt_for_virustotal_key(logger):
@@ -35,32 +32,6 @@ def _prompt_for_virustotal_key(logger):
         logger.warning("No API key provided. Skipping VirusTotal check.")
         return None
     return api_key
-
-
-def run_analysis(installer_path, check_vt, vt_api_key, logger):
-    logger.info(f"Starting analysis for: {installer_path}")
-    initial_analysis(installer_path, check_vt, vt_api_key)
-
-    try:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            extract_7z(installer_path, temp_dir)
-            logger.info(f"Extraction completed. Files extracted to: {temp_dir}")
-
-            # List extracted files for info
-            extracted_files = list(pathlib.Path(temp_dir).rglob("*"))
-
-            logger.info(f"Extracted {len(extracted_files)} files:")
-            for f in extracted_files:
-                logger.info(f" - {f}")
-
-            # TODO: integrate analyzer here in future
-            #analyze_extracted_files(temp_dir)
-            resolve_pe_imports(installer_path)
-            logger.info("DLL analysis completed.")
-
-    except Exception as e:
-        logger.error(f"Failed to extract/analyze: {e}")
-
 
 def main():
     logger = setup_logging()

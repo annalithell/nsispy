@@ -13,23 +13,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
+import logging
 import pefile
 import logging
 import subprocess
 import pprint
 import requests
+import tempfile
+import pathlib
+
+from .nsis7z import extract_7z
 from .util import sha256hash
 
 logger = logging.getLogger(__name__)
-
-def is_setup_exe(file_path):
-    """
-    "setup.exe" is common name for installers exploiting bug in the Windows compatibility layer, 
-    allowing injections of certain DLLs.
-    Reference: https://nsis.sourceforge.io/Best_practices
-    """
-    return os.path.basename(file_path).lower() == "setup.exe"
 
 
 def resolve_pe_imports(file_path):
@@ -82,16 +78,10 @@ def resolve_pe_imports(file_path):
                 ilt, ilt_rva = iat, iat_rva
                 continue
 
-            # logger.info(f"Importing DLL: {ddl_name}")
-            # logger.info(f"ILT RVA: {hex(ilt_rva)}")
-            # logger.info(f"IAT RVA: {hex(iat_rva)}")
-
             for idx in range(len(ilt)):
                 hint_rva = ilt[idx].AddressOfData
                 if hint_rva & ordinal_flag:
-                    # import by ordinal
-                    #logger.info("Import by ordinal")
-                    # get ordinal number
+                    # import is done by ordinal
                     ordinal = hint_rva & 0xFFFF
                     if ddl_name not in results["ordinal_imports"]:
                             results["ordinal_imports"][ddl_name] = []
@@ -129,7 +119,7 @@ def resolve_pe_imports(file_path):
     return results
 
 
-def analyze_pe_header(file_path):
+def is_nsis(file_path):
     """
     Check if installer is NSIS or not. 
     """
@@ -140,8 +130,8 @@ def analyze_pe_header(file_path):
         with open(file_path, "rb") as f:
             f.seek(offset)
             compressed = f.read()
-            #logger.info(compressed)
         if b"NullsoftInst" in compressed:
+            logger.info("File is an NSIS installer.")
             return True
 
     except Exception as e:
@@ -151,6 +141,9 @@ def analyze_pe_header(file_path):
 
 
 def is_signed(file_path):
+    """
+    Check if file is signed or not. 
+    """
     try:
         result = subprocess.run(
             ["powershell", "-Command", f"(Get-AuthenticodeSignature '{file_path}').Status"],
@@ -159,6 +152,7 @@ def is_signed(file_path):
         status = result.stdout.strip()
         logger.info("Signature status: %s", status)
         return status == "Valid"
+    
     except Exception as e:
         logger.warning("Failed to check signature: %s", e)
         return False
@@ -215,9 +209,8 @@ def initial_analysis(file_path, check_virustotal, vt_api_key):
     Wrapper function for initial analysis of the installer.
     This function checks if:
         1. The file is an NSIS installer
-        2. The file is not named "setup.exe"
-        3. If it is signed (Windows: use getAuthenticodeSignature)
-        4. Optional: If hash is known on virustotal (requires API key from user)
+        2. If it is signed (Windows: use getAuthenticodeSignature)
+        3. Optional: If hash is known on virustotal (requires API key from user)
 
     Parameters:
         file_path (str): Path to the installer file
@@ -227,17 +220,48 @@ def initial_analysis(file_path, check_virustotal, vt_api_key):
     Returns:
         Dictionary: {
             "is_nsis": bool,
-            "is_setup_exe": bool,
             "is_signed": bool,
             "hash_known": bool
         }
     """
     results = {}
-    results["is_nsis"] = analyze_pe_header(file_path)
-    results["is_setup_exe"] = is_setup_exe(file_path)
+    results["is_nsis"] = is_nsis(file_path)
     results["is_signed"] = is_signed(file_path)
     if check_virustotal:
         results["is_hash_known"] = is_hash_known(sha256hash(file_path), vt_api_key)
     else:
+        logger.info("Skipping VirusTotal check as per user request.")
         results["is_hash_known"] = False
     return results
+
+
+def run_analysis(installer_path, check_vt, vt_api_key, logger):
+    logger.info(f"Starting analysis for: {installer_path}")
+    results = initial_analysis(installer_path, check_vt, vt_api_key)
+
+    logger.info(f"Initial analysis completed. Results: {results}")
+
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            extracted_files = extract_7z(installer_path, temp_dir)
+            logger.info(f"Extraction completed. Files extracted to: {temp_dir}")
+
+            for f in extracted_files:
+                allowed_extensions = {'.exe', '.dll', '.sys', '.drv', '.ocx', '.cpl', '.scr'}
+
+                if pathlib.Path(f).suffix.lower() in allowed_extensions:
+                    logger.info(f" Resolve .dll's in file - {f}")
+
+                    ## resolve imports of extracted PE file
+                    resolve_pe_imports(f)
+
+                    ## check if extracted PE file is signed or not
+                    if is_signed(f):
+                        logger.info(f"File {f} is signed.")
+                    else:
+                        logger.info(f"File {f} is not signed.")
+            
+            logger.info("DLL analysis completed.")
+
+    except Exception as e:
+        logger.error(f"Failed to extract/analyze: {e}")

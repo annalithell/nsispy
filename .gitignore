@@ -5,3 +5,5 @@ venv
 tests/nsis_scripts/
 *.log
 .pytest_cache
+build/
+*.egg-info/
