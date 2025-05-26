@@ -27,8 +27,7 @@ from .util import sha256hash
 
 logger = logging.getLogger(__name__)
 
-
-def resolve_pe_imports(file_path):
+def resolve_pe_imports(file_path, logger):
     """
     Resolve imports of a PE using PEFile. 
     This function's logic is inspired by the work of Vlad Topan.
@@ -115,7 +114,7 @@ def resolve_pe_imports(file_path):
         logger.warning("Failed to process file: %s", e)
         return None
     
-    logger.info(pprint.pprint(results))
+    logger.info(pprint.pformat(results))
     return results
 
 
@@ -253,7 +252,8 @@ def run_analysis(installer_path, check_vt, vt_api_key, logger):
                     logger.info(f" Resolve .dll's in file - {f}")
 
                     ## resolve imports of extracted PE file
-                    resolve_pe_imports(f)
+                    results = resolve_pe_imports(f, logger)
+                    #logger.info(f"Resolved imports for {f}: {pprint.pprint(results)}")
 
                     ## check if extracted PE file is signed or not
                     if is_signed(f):
