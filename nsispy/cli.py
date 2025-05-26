@@ -58,9 +58,6 @@ def run_analysis(installer_path, check_vt, vt_api_key, logger):
             resolve_pe_imports(installer_path)
             logger.info("DLL analysis completed.")
 
-
-
-
     except Exception as e:
         logger.error(f"Failed to extract/analyze: {e}")
 

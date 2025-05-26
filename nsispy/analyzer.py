@@ -65,7 +65,6 @@ def resolve_pe_imports(file_path):
             ilt_rva = entry.struct.OriginalFirstThunk
             
             # fetch RVA of the import address table (IAT)
-            # (the actual address loader writes to when resolving imports at load time)
             iat_rva = entry.struct.FirstThunk
 
             # fetch tables
@@ -167,15 +166,15 @@ def is_signed(file_path):
     
 def is_hash_known(filehash, vt_api_key):
     """
-    Check if the hash is known on VirusTotal.
-    This function requires a VirusTotal API key.
+    Check if the hash is known to be malicious and/or suspicious on VirusTotal.
+    This function requires a personal VirusTotal API key.
 
     Parameters:
         filehash (str): SHA256 hash of the file
         vt_api_key (str): API key for VirusTotal
 
     Returns:
-        bool: True if hash is known, False otherwise
+        bool: True if hash is known to be malicious and/or suspicious, False otherwise
     """
     logger.info("Checking hash %s on VirusTotal...", filehash)
 
@@ -188,13 +187,24 @@ def is_hash_known(filehash, vt_api_key):
 
     response = requests.get(url, headers=headers, params={"apikey": vt_api_key})
 
-    if response.status_code == 404:
+    if response.status_code == 200:
+        logger.info("Hash found on VirusTotal.")
+        data = response.json().get("data", {})
+        try:
+            attributes = data.get("attributes", {})
+            last_analysis = attributes.get("last_analysis_stats")
+            if last_analysis["malicious"] > 0 or last_analysis["suspicious"] > 0:
+                logger.warning("Hash is known to be malicious or suspicious on VirusTotal.")
+                return True
+            else: 
+                logger.info("Hash is not known to be malicious or suspicious on VirusTotal.")
+                return False
+        except KeyError as e:
+            logger.warning("Error parsing VirusTotal response: %s", e)
+            return False
+    elif response.status_code == 404:
         logger.info("Hash not found on VirusTotal.")
         return False
-    elif response.status_code == 200:
-        logger.info("Hash found on VirusTotal.")
-        logger.info(response.text)
-        return True
     else:
         logger.warning("Error checking hash on VirusTotal: %s", response.status_code)
         return False
