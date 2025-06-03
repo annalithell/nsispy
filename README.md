@@ -19,6 +19,10 @@ TO BE CONTINUED
 
 This section describes how to run the CLI and what functions can be imported from the library. 
 
+**As a library**
+
+TO BE CONTINUED
+
 **How to run the CLI**
 
 1. Clone the repo:
@@ -51,10 +55,6 @@ cd nsispy
 - --check-vt: Optional flag to check the file hash on VirusTotal.
   
 ⚠️ To use `--check-vt` you must have a personal VirusTotal account and provide an API key when prompted.
-
-**About the library**
-
-TO BE CONTINUED
 
 ## Testing
 

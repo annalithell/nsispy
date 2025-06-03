@@ -22,10 +22,14 @@ import requests
 import tempfile
 import pathlib
 
-from .nsis7z import extract_7z
+from .nsis7z import extract_7z, list_contents_7z
 from .util import sha256hash
 
 logger = logging.getLogger(__name__)
+
+def resolve_pe_exports(file_path, logger):
+
+    return
 
 def resolve_pe_imports(file_path, logger):
     """
@@ -126,11 +130,25 @@ def is_nsis(file_path):
         pe = pefile.PE(file_path, fast_load=False)
         last = max(pe.sections, key=lambda s: s.PointerToRawData + s.SizeOfRawData)
         offset = last.PointerToRawData + last.SizeOfRawData
+        # The NSIS data is appended after the last section of the PE file.
         with open(file_path, "rb") as f:
             f.seek(offset)
             compressed = f.read()
+            #logger.info(f"Compressed data length: {len(compressed)}")
+            logger.info(compressed)
         if b"NullsoftInst" in compressed:
             logger.info("File is an NSIS installer.")
+
+            # Write the compressed NSIS payload to a file
+            with open("nsis_payload.bin", "wb") as f:
+                f.write(compressed)
+                logger.info("NSIS payload written to nsis_payload.bin")
+            
+            with open("nsis_payload.bin", "rb") as f:
+                # Check if the file starts with the NSIS magic number
+                data = (f.read())
+                logger.info(data)
+
             return True
 
     except Exception as e:
@@ -225,13 +243,13 @@ def initial_analysis(file_path, check_virustotal, vt_api_key):
     """
     results = {}
     results["is_nsis"] = is_nsis(file_path)
-    results["is_signed"] = is_signed(file_path)
-    if check_virustotal:
-        results["is_hash_known"] = is_hash_known(sha256hash(file_path), vt_api_key)
-    else:
-        logger.info("Skipping VirusTotal check as per user request.")
-        results["is_hash_known"] = False
-    return results
+    # results["is_signed"] = is_signed(file_path)
+    # if check_virustotal:
+    #     results["is_hash_known"] = is_hash_known(sha256hash(file_path), vt_api_key)
+    # else:
+    #     logger.info("Skipping VirusTotal check as per user request.")
+    #     results["is_hash_known"] = False
+    # return results
 
 
 def run_analysis(installer_path, check_vt, vt_api_key, logger):
@@ -239,6 +257,8 @@ def run_analysis(installer_path, check_vt, vt_api_key, logger):
     results = initial_analysis(installer_path, check_vt, vt_api_key)
 
     logger.info(f"Initial analysis completed. Results: {results}")
+
+    list_contents_7z(installer_path, logger)
 
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
