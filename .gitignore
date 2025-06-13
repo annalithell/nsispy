@@ -7,3 +7,4 @@ tests/nsis_scripts/
 .pytest_cache
 build/
 *.egg-info/
+*.bin

@@ -107,12 +107,13 @@ def _parse_7z_output(output):
         'files': metadata
     }
 
-def list_contents_7z(filepath):
+def list_contents_7z(filepath, logger):
     """
     Lists contents of an NSIS-generated installer using 7-Zip.
 
     Parameters:
         filepath (str): Path to the .exe installer
+        logger (logging.Logger): Logger instance for logging messages
 
     Returns:
         dict: A dictionary with keys like 'Path', 'Type', 'Method', etc.

@@ -22,10 +22,15 @@ import requests
 import tempfile
 import pathlib
 
-from .nsis7z import extract_7z
+from .nsis7z import extract_7z, list_contents_7z
 from .util import sha256hash
 
 logger = logging.getLogger(__name__)
+
+# def resolve_pe_exports(file_path, logger):
+# TODO: Maybe implement this later. 
+#     return
+
 
 def resolve_pe_imports(file_path, logger):
     """
@@ -65,6 +70,13 @@ def resolve_pe_imports(file_path, logger):
             # fetch tables
             ilt = pe.get_import_table(ilt_rva)
             iat = pe.get_import_table(iat_rva)
+
+            # # check if installer is using COM (Component Object Model) and uses ole32.dll
+            # # this is a common library used for embedding files or additional script content.
+            # # can be used to embedd .nsi script in the installer.
+            # uses_ole32 = False
+            # if 'ole32.dll' in ddl_name.lower():
+            #     uses_ole32 = True
 
             if iat is None:
                 logger.warning("IAT is None for %s", ddl_name)
@@ -126,16 +138,28 @@ def is_nsis(file_path):
         pe = pefile.PE(file_path, fast_load=False)
         last = max(pe.sections, key=lambda s: s.PointerToRawData + s.SizeOfRawData)
         offset = last.PointerToRawData + last.SizeOfRawData
+        # The NSIS data is appended after the last section of the PE file.
         with open(file_path, "rb") as f:
             f.seek(offset)
             compressed = f.read()
+            #logger.info(f"Compressed data length: {len(compressed)}")
+            #logger.info(compressed)
         if b"NullsoftInst" in compressed:
             logger.info("File is an NSIS installer.")
+
+            # Write the compressed NSIS payload to a file
+            with open("nsis_payload.bin", "wb") as f:
+                f.write(compressed)
+                logger.info("NSIS payload written to nsis_payload.bin")
+            
+            with open("nsis_payload.bin", "rb") as f:
+                # Check if the file starts with the NSIS magic number
+                data = (f.read())
+                logger.info(data)
             return True
 
     except Exception as e:
         logger.warning("Failed to process file: %s", e)
-
     return False
 
 
@@ -240,6 +264,8 @@ def run_analysis(installer_path, check_vt, vt_api_key, logger):
 
     logger.info(f"Initial analysis completed. Results: {results}")
 
+    list_contents_7z(installer_path, logger)
+
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
             extracted_files = extract_7z(installer_path, temp_dir)
@@ -255,7 +281,15 @@ def run_analysis(installer_path, check_vt, vt_api_key, logger):
                     results = resolve_pe_imports(f, logger)
                     #logger.info(f"Resolved imports for {f}: {pprint.pprint(results)}")
 
-                    ## check if extracted PE file is signed or not
+                    # check if installer is using COM (Component Object Model) and uses ole32.dll
+                    # this is a common library used for embedding files or additional script content.
+                    # can be used to embedd .nsi script in the installer.
+                    uses_ole32 = False
+                    if 'ole32.dll' in results["imports"].keys():
+                        uses_ole32 = True
+                        logger.info(f"File {f} uses ole32.dll for COM operations? {uses_ole32}")
+
+                    # check if extracted PE file is signed or not
                     if is_signed(f):
                         logger.info(f"File {f} is signed.")
                     else:
