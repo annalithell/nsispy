@@ -9,11 +9,10 @@ The main challenge is to retrieve all files associated with the NSIS-generated i
 ## Path towards retrieving the NSIS script
 According to my understanding, the author of a NSIS script can choose to not include any trace of the script in the final installer (see section ['About'](https://nsis.sourceforge.io/Can_I_decompile_an_existing_installer%3F)). To investigate this hypothesis further, a way to move forward is to generate two nsis installers. These two installers should be generated using identical scripts except from the part where one explicitly states to included in the nsis script while the other one does not. 
 
-This have been done by writing two identical .nsi scripts (using the same compression method) apart from the following line included in one of the two:
+This have been done by writing two identical .nsi scripts (using the same compression method). In one of the script, the following instruction was included as well:
 
 ``` 
-# Embed the script itself in the installer
-# script name is "with_script.nsi"
+# Embed the script itself in the installer (script name - "with_script.nsi")
     File /oname=benign_script.nsi "with_script.nsi"  
 ```
 
@@ -21,7 +20,7 @@ The brute-force approach from here would be to reverse-engineer the byte code of
 
 However, this proved to be unfeasible in practice. The two headers of the generated .exe installers changed completely and my conclusion was that it would not be possible to reverse-engineer byte by byte, since they differed too much from one another and common patterns were not easy to detect. 
 
-Instead, I tried to first detect if the .nsi script had been embedded as plaintext in the installer. As expected, this was not the case. However, one notable difference between the two installers was that the one with the embedded .nsi script calls functions from ``` ole32.dll ```, while the other one does not. This is an indication that the script uses COM to embedd the script data. For further progress, it would be interesting to investigate this lead further. 
+Instead, I tried to first detect if the .nsi script had been embedded as plaintext in the installer. As expected, this was not the case. However, one notable difference between the two installers was that the one with the embedded .nsi script calls functions from ``` ole32.dll ```, while the other one does not. This is an indication that the script uses COM (Component Object Mode)to embedd the script data. For further progress, it would be interesting to investigate this lead further. 
 
 
 ## Path towards retrieving the DLLs 
