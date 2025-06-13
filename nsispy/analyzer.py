@@ -27,9 +27,10 @@ from .util import sha256hash
 
 logger = logging.getLogger(__name__)
 
-def resolve_pe_exports(file_path, logger):
+# def resolve_pe_exports(file_path, logger):
+# TODO: Maybe implement this later. 
+#     return
 
-    return
 
 def resolve_pe_imports(file_path, logger):
     """
@@ -69,6 +70,13 @@ def resolve_pe_imports(file_path, logger):
             # fetch tables
             ilt = pe.get_import_table(ilt_rva)
             iat = pe.get_import_table(iat_rva)
+
+            # # check if installer is using COM (Component Object Model) and uses ole32.dll
+            # # this is a common library used for embedding files or additional script content.
+            # # can be used to embedd .nsi script in the installer.
+            # uses_ole32 = False
+            # if 'ole32.dll' in ddl_name.lower():
+            #     uses_ole32 = True
 
             if iat is None:
                 logger.warning("IAT is None for %s", ddl_name)
@@ -135,7 +143,7 @@ def is_nsis(file_path):
             f.seek(offset)
             compressed = f.read()
             #logger.info(f"Compressed data length: {len(compressed)}")
-            logger.info(compressed)
+            #logger.info(compressed)
         if b"NullsoftInst" in compressed:
             logger.info("File is an NSIS installer.")
 
@@ -148,12 +156,10 @@ def is_nsis(file_path):
                 # Check if the file starts with the NSIS magic number
                 data = (f.read())
                 logger.info(data)
-
             return True
 
     except Exception as e:
         logger.warning("Failed to process file: %s", e)
-
     return False
 
 
@@ -243,13 +249,13 @@ def initial_analysis(file_path, check_virustotal, vt_api_key):
     """
     results = {}
     results["is_nsis"] = is_nsis(file_path)
-    # results["is_signed"] = is_signed(file_path)
-    # if check_virustotal:
-    #     results["is_hash_known"] = is_hash_known(sha256hash(file_path), vt_api_key)
-    # else:
-    #     logger.info("Skipping VirusTotal check as per user request.")
-    #     results["is_hash_known"] = False
-    # return results
+    results["is_signed"] = is_signed(file_path)
+    if check_virustotal:
+        results["is_hash_known"] = is_hash_known(sha256hash(file_path), vt_api_key)
+    else:
+        logger.info("Skipping VirusTotal check as per user request.")
+        results["is_hash_known"] = False
+    return results
 
 
 def run_analysis(installer_path, check_vt, vt_api_key, logger):
@@ -275,7 +281,15 @@ def run_analysis(installer_path, check_vt, vt_api_key, logger):
                     results = resolve_pe_imports(f, logger)
                     #logger.info(f"Resolved imports for {f}: {pprint.pprint(results)}")
 
-                    ## check if extracted PE file is signed or not
+                    # check if installer is using COM (Component Object Model) and uses ole32.dll
+                    # this is a common library used for embedding files or additional script content.
+                    # can be used to embedd .nsi script in the installer.
+                    uses_ole32 = False
+                    if 'ole32.dll' in results["imports"].keys():
+                        uses_ole32 = True
+                        logger.info(f"File {f} uses ole32.dll for COM operations? {uses_ole32}")
+
+                    # check if extracted PE file is signed or not
                     if is_signed(f):
                         logger.info(f"File {f} is signed.")
                     else:
