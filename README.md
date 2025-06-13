@@ -13,7 +13,6 @@
 **Dependencies**
 - To utilize the full functionality of the library, 7-Zip must be installed on you system. You can download it from the official website: https://www.7-zip.org/ 
 
-TO BE CONTINUED
 
 ## Usage
 
@@ -55,10 +54,6 @@ cd nsispy
 - --check-vt: Optional flag to check the file hash on VirusTotal.
   
 ⚠️ To use `--check-vt` you must have a personal VirusTotal account and provide an API key when prompted.
-
-## Testing
-
-TO BE CONTINUED
 
 ## License
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](./LICENSE) file for details.
