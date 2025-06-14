@@ -13,16 +13,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# cli.py
-
 import argparse
 import pathlib
 import sys
 
-from .analyzer import run_analysis
+from .analyzer import analyze_installer
 from .util import setup_logging
 
 def _prompt_for_virustotal_key(logger):
+    """
+    Helper function used to prompt the user for their VirusTotal API key.
+
+    Parameters:
+        logger (logging.Logger): Logger instance for logging messages.
+
+    Returns:
+        str: The user's VirusTotal API key if provided, otherwise None.
+    """
     proceed = input("In order to analyze the file using VirusTotal, we need your personal API key.\nDo you wish to proceed? (yes/no): ").strip().lower()
     if proceed not in ("yes", "y"):
         logger.info("User declined VirusTotal check.")
@@ -50,7 +57,8 @@ def main():
     if args.check_vt:
         vt_api_key = _prompt_for_virustotal_key(logger)
 
-    run_analysis(installer_path, bool(vt_api_key), vt_api_key, logger)
+    # perform analysis on provided installer
+    analyze_installer(installer_path, bool(vt_api_key), vt_api_key, logger)
 
 
 if __name__ == "__main__":

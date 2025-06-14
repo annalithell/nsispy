@@ -24,20 +24,17 @@ from .util import get_7z_path
 
 logger = logging.getLogger(__name__)
 
-
-class NSIS7zAnalysisError(Exception):
-    pass
-
-
 def _parse_7z_output(output):
     """
     Parses the 7-Zip output and extracts both header- and metadata.
 
     Parameters:
-        output (str): Raw text output from `7z l`
+        output (str): Raw text output from `list_contents_7z`
 
     Returns:
-        dict: Parsed metadata
+        dict: Parsed output containing:
+            - 'header': Dictionary with header information (e.g., Path, Type, Method)
+            - 'files': Dictionary with file metadata (e.g., Date, Time, Attr, Size, Compressed)
     """
     header = {}
     metadata = {}
@@ -112,15 +109,17 @@ def list_contents_7z(filepath, logger):
     Lists contents of an NSIS-generated installer using 7-Zip.
 
     Parameters:
-        filepath (str): Path to the .exe installer
+        filepath (str): Path to the installer
         logger (logging.Logger): Logger instance for logging messages
 
     Returns:
-        dict: A dictionary with keys like 'Path', 'Type', 'Method', etc.
+        dict: Parsed output containing:
+            - 'header': Dictionary with header information (e.g., Path, Type, Method)
+            - 'files': Dictionary with file metadata (e.g., Date, Time, Attr, Size, Compressed)
 
     Raises:
-        FileNotFoundError: If the file doesn't exist
-        NSIS7zAnalysisError: If 7z fails or returns unexpected output
+        Exception: If the file does not exist or if an error occurs during processing
+
     """
     # Check if the file exists
     if not os.path.isfile(filepath):
@@ -140,42 +139,47 @@ def list_contents_7z(filepath, logger):
             check=True
         )
 
-    except FileNotFoundError:
-        logger.exception("7z is not installed or not in PATH.")
-        raise NSIS7zAnalysisError("7z is not installed or not in PATH.")
-    
-    except subprocess.CalledProcessError as e:
-        logger.error(f"7z failed: {e.stdout}")
-        raise NSIS7zAnalysisError(f"7z failed: {e.stdout}")
+    except Exception as e:
+        logger.error(f"An error occured: {e}")
+        raise Exception("Failed to run subprocess '7z l':") from e
 
     return _parse_7z_output(result.stdout)
 
 
-def extract_7z(filepath, output_dir):
+def extract_files_7z(filepath, output_dir):
     """
-    Extracts the contents of an NSIS-generated installer using 7-Zip.
+    Extracts the contents of an installer using 7-Zip.
+
     Parameters:
         filepath (str): Path to the .exe installer
         output_dir (str): Directory where the files will be extracted
+
     Returns:
         None
+
     Raises:
-        FileNotFoundError: If the file doesn't exist
-        NSIS7zAnalysisError: If 7z fails or returns unexpected output
+        Exception: If the 7z extraction subprocess fails
     """
     path_7z = get_7z_path()
     logger.debug("Using 7-Zip at: %s", path_7z)
 
-    subprocess.run(
-        [path_7z, 'x', filepath, f"-o{output_dir}", "-y"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        check=True
-    )
+    try:
+        subprocess.run(
+            [path_7z, 'x', filepath, f"-o{output_dir}", "-y"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=True
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to extract {filepath} to {output_dir}: {e}")
+        raise Exception(f"Failed to extract {filepath} to {output_dir}: {e}") from e
+    
     extracted_files = list(pathlib.Path(output_dir).rglob('*'))
     
     logger.info(f"Extracted {len(extracted_files)} files:")
+
     for f in extracted_files:
         logger.info(f" - {f}")
 

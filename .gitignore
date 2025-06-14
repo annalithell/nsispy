@@ -1,8 +1,6 @@
 venv
 *.exe
 *__pycache__
-*.nsi
-tests/nsis_scripts/
 *.log
 .pytest_cache
 build/

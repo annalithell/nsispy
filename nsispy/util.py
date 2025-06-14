@@ -22,11 +22,12 @@ logger = logging.getLogger(__name__)
 
 def get_7z_path() -> str:
     """
-    Get path of the 7z executable.
+    Get path of the installed 7z executable.
     If not found in PATH, check the default installation location.  
-    Raise an error if not found.
+
     Returns:
         str: Path to the 7z executable.
+
     Raises:
         FileNotFoundError: If the file does not exist.
         RuntimeError: If 7z is not found in PATH or default location.
@@ -47,7 +48,7 @@ def get_7z_path() -> str:
 
 def sha256hash(file_path):
     """
-    Get the SHA256 hash of a file.
+    Compute the SHA256 hash of a file.
     
     Parameters:
         file_path (str): Path to the file.
@@ -69,6 +70,9 @@ def sha256hash(file_path):
 def setup_logging():
     """
     Set up logging configuration.
+
+    Returns:
+        logging.Logger: Configured logger instance.
     """
     logging.basicConfig(
         level=logging.DEBUG,
@@ -78,5 +82,4 @@ def setup_logging():
             logging.StreamHandler()
         ]
     )
-    #return logging.getLogger(__name__)
     return logging.getLogger()
