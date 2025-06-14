@@ -36,7 +36,7 @@ pip install .
 
 ## Usage
 
-This section explains how to use the CLI. To view available library functions, see [📚 nsispy Library Documentation](docs/library.md). 
+This section explains how to use the CLI. To view available library functions, see [nsispy Library Documentation](docs/library.md). 
 
 **How to run the CLI**
 
@@ -51,7 +51,7 @@ To analyze an NSIS installer from the command-line, run:
 - `--check-vt` or `-vt`: Optional flag to query the VirusTotal API for known threats.
 - `--help` or `-h`: Display CLI usage instructions.
 
-⚠️ To use `--check-vt` you must have a personal VirusTotal account and provide an API key when prompted by the CLI.
+To use `--check-vt` you must have a personal VirusTotal account and provide an API key when prompted by the CLI.
 
 ## License
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](./LICENSE) file for details.
