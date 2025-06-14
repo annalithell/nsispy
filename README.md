@@ -1,59 +1,57 @@
 # nsispy 
 
-`nsispy` is a Python library and CLI tool for inspecting and analyzing NSIS (Nullsoft Scriptable Install System) `.exe` files.
+`nsispy` is a Python library and command-line tool (CLI) for inspecting and analyzing Windows Installers created with NSIS (Nullsoft Scriptable Install System). 
 
 ## Features
-- Extract files packaged inside `.exe` files using 7-Zip.
-- Verify digital signatures of files.
-- Query VirusTotal API to check if `.exe` files are known to be malicious or suspicious.
-- Parse extracted PE files to analyze Windows API calls made.
+- Query the VirusTotal API to determine if an installer is flagged as malicious or suspicious.
+- Extract embedded files from NSIS installers using 7-Zip.
+- Verify the digital signature of installer files.
+- Analyze extracted binaries to identify Windows API calls and imported DLLs.
 
 ## Installation
 
-**Dependencies**
-- To utilize the full functionality of the library, 7-Zip must be installed on you system. You can download it from the official website: https://www.7-zip.org/ 
+`nsispy` is currently available from source. To install and use it, clone the repository and set up a virtual environment:
 
+```
+# Clone the library source code
+git clone https://github.com/annalithell/nsispy.git
+cd nsispy
+
+# Create and activate a virtual environment
+python -m venv venv
+
+# On Windows:
+venv\Scripts\activate
+
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install the library
+pip install .
+```
+
+**Dependencies**
+- **7-Zip** must be installed and accessible in your system's `PATH` to support extraction functionality. Download it from the official site: https://www.7-zip.org/ 
+- This project was developed using Python 3.11.9. 
 
 ## Usage
 
-This section describes how to run the CLI and what functions can be imported from the library. 
-
-**As a library**
-
-TO BE CONTINUED
+This section explains how to use the CLI. To view available library functions, see [📚 nsispy Library Documentation](docs/library.md). 
 
 **How to run the CLI**
 
-1. Clone the repo:
-```
-git clone https://github.com/annalithell/nsispy.git
-cd nsispy 
-``` 
+Ensure you've followed the installation steps above. Activate your virtual environment and navigate to the `nsispy` directory. 
 
-1. Create a virtual environment:
-
-`python -m venv venv`
-
-3. Activate the virtual environment:
-
-- On Windows:
-
-`venv\bin\activate` 
-
-4. Install the package:
-
-`pip install .` 
-
-5. Run the CLI:
+To analyze an NSIS installer from the command-line, run:
    
 `nsispy --path /path/to/installer.exe --check-vt`
 
 **CLI Options**
-- --path: Path to the `.exe` installer file to analyze (required).
+- `--path` [PATH]: Path to the `.exe` installer to be analyzed (*Required*).
+- `--check-vt` or `-vt`: Optional flag to query the VirusTotal API for known threats.
+- `--help` or `-h`: Display CLI usage instructions.
 
-- --check-vt: Optional flag to check the file hash on VirusTotal.
-  
-⚠️ To use `--check-vt` you must have a personal VirusTotal account and provide an API key when prompted.
+⚠️ To use `--check-vt` you must have a personal VirusTotal account and provide an API key when prompted by the CLI.
 
 ## License
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](./LICENSE) file for details.

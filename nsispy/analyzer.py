@@ -138,16 +138,12 @@ def resolve_pe_imports(file_path, logger):
                             logger.warning(f"[!] Invalid function name at {hex(hint_rva)}")
                             continue
                         func_name = func_name.decode('utf-8', errors='replace')
-                        #logger.info(f"Imported Function: {func_name} (Hint: {hint})")
-                        #results["imports"].append(f"{ddl_name}!{func_name}")
 
                         # store what functions are used from dll
                         if dll_name not in results["imports"]:
                             results["imports"][dll_name] = {}
-
                         results["imports"][dll_name][func_name] = hint
 
-                        #logger.info(pprint.pprint(results["imports"]))
                     except Exception as e:
                         logger.warning(f"Failed to resolve function name at {hex(hint_rva)}: {e}")
                         continue
@@ -237,8 +233,6 @@ def is_malicious_hash_virustotal(filehash, vt_api_key):
     "x-apikey": vt_api_key
     }
 
-    #response = requests.get(url, headers=headers, params={"apikey": vt_api_key})
-
     try:
         response = requests.get(url, headers=headers)
         # Check if the request was successful
@@ -270,30 +264,6 @@ def is_malicious_hash_virustotal(filehash, vt_api_key):
         logger.warning(f"Error parsing VirusTotal response: {e}")
         return False
 
-
-
-    # if response.status_code == 200:
-    #     logger.info("Hash found on VirusTotal.")
-    #     data = response.json().get("data", {})
-    #     try:
-    #         attributes = data.get("attributes", {})
-    #         last_analysis = attributes.get("last_analysis_stats")
-    #         if last_analysis["malicious"] > 0 or last_analysis["suspicious"] > 0:
-    #             logger.warning("Hash is known to be malicious or suspicious on VirusTotal.")
-    #             return True
-    #         else: 
-    #             logger.info("Hash is not known to be malicious or suspicious on VirusTotal.")
-    #             return False
-    #     except KeyError as e:
-    #         logger.warning("Error parsing VirusTotal response: %s", e)
-    #         return False
-    # elif response.status_code == 404:
-    #     logger.info("Hash not found on VirusTotal.")
-    #     return False
-    # else:
-    #     logger.warning("Error checking hash on VirusTotal: %s", response.status_code)
-    #     return False
-    
 
 def analyze_installer_metadata(file_path, check_virustotal, vt_api_key):
     """
@@ -351,10 +321,10 @@ def analyze_installer(installer_path, check_vt, vt_api_key, logger):
                     # check if installer is using COM (Component Object Model) and uses ole32.dll
                     # this is a common library used for embedding files or additional script content.
                     # can be used to embedd .nsi script in the installer.
-                    uses_ole32 = False
-                    if 'ole32.dll' in results["imports"].keys():
-                        uses_ole32 = True
-                        logger.info(f"File {f} uses ole32.dll for COM operations? {uses_ole32}")
+                    # uses_ole32 = False
+                    # if 'ole32.dll' in results["imports"].keys():
+                    #     uses_ole32 = True
+                    #     logger.info(f"File {f} uses ole32.dll for COM operations? {uses_ole32}")
             
             logger.info("DLL analysis completed.")
 
